@@ -1,0 +1,64 @@
+app:
+  url: "https://8080-4787ea8a129bbd6d.monkeycode-ai.online"
+  name: "AuthNas"
+  environment: "development"
+
+database:
+  path: "./data/authnas.db"
+
+security:
+  storage_key: "this-is-a-very-long-secret-key-for-dev-only-123456"
+  password_strength: 0
+  password_min_length: 8
+  mfa_required: false
+  signup_requires_approval: false
+  email_verification: false
+  initial_admin_username: "admin"
+  initial_admin_email: "admin@example.com"
+  initial_admin_password: "Admin123!"
+
+email:
+  enabled: false
+  smtp_host: "smtp.example.com"
+  smtp_port: 587
+  smtp_user: ""
+  smtp_password: ""
+  from_address: "noreply@example.com"
+  from_name: "AuthNas"
+
+oidc:
+  issuer: "https://8080-4787ea8a129bbd6d.monkeycode-ai.online"
+  private_key: "./keys/private.pem"
+  certificate: "./keys/certificate.pem"
+
+rate_limit:
+  enabled: true
+  requests_per_minute: 5000
+
+jwt:
+  access_token_expiry: "15m"
+  refresh_token_expiry: "168h"
+
+cors:
+  allowed_origins:
+    - "http://localhost:3000"
+    - "http://localhost:8080"
+    - "https://8080-4787ea8a129bbd6d.monkeycode-ai.online"
+    - "https://3000-4787ea8a129bbd6d.monkeycode-ai.online"
+  allow_credentials: true
+  allowed_methods:
+    - "GET"
+    - "POST"
+    - "PUT"
+    - "DELETE"
+    - "PATCH"
+    - "OPTIONS"
+  allowed_headers:
+    - "Content-Type"
+    - "Content-Length"
+    - "Accept-Encoding"
+    - "Authorization"
+    - "Accept"
+    - "Origin"
+    - "Cache-Control"
+    - "X-Requested-With"

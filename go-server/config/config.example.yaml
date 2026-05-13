@@ -1,0 +1,58 @@
+app:
+  url: "http://localhost:8080"
+  name: "AuthNas"
+  environment: "development"
+
+database:
+  path: "./data/authnas.db"
+
+security:
+  storage_key: "your-32-byte-random-key-here-change-in-production"
+  password_strength: 3
+  mfa_required: false
+  signup_requires_approval: false
+  email_verification: false
+
+email:
+  enabled: false
+  smtp_host: "smtp.example.com"
+  smtp_port: 587
+  smtp_user: ""
+  smtp_password: ""
+  from_address: "noreply@example.com"
+  from_name: "AuthNas"
+
+oidc:
+  issuer: "http://localhost:8080"
+  private_key: "./keys/private.pem"
+  certificate: "./keys/certificate.pem"
+
+rate_limit:
+  enabled: true
+  requests_per_minute: 5000
+
+jwt:
+  access_token_expiry: "15m"
+  refresh_token_expiry: "168h"
+
+cors:
+  allowed_origins:
+    - "http://localhost:3000"
+    - "http://localhost:8080"
+  allow_credentials: true
+  allowed_methods:
+    - "GET"
+    - "POST"
+    - "PUT"
+    - "DELETE"
+    - "PATCH"
+    - "OPTIONS"
+  allowed_headers:
+    - "Content-Type"
+    - "Content-Length"
+    - "Accept-Encoding"
+    - "Authorization"
+    - "Accept"
+    - "Origin"
+    - "Cache-Control"
+    - "X-Requested-With"

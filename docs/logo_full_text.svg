@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="600" height="160" viewBox="0 0 600 160" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="purpleGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#b794f4;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#906bc7;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="shieldGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#d7baff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#906bc7;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Shield Icon -->
+  <g transform="translate(15, 15)">
+    <path d="M50 8 L85 20 L85 55 C85 85 68 108 50 115 C32 108 15 85 15 55 L15 20 Z" 
+          fill="url(#shieldGradient)" 
+          stroke="#704ca5" 
+          stroke-width="2.5"/>
+    <!-- Lock/Shield inner design - keyhole -->
+    <circle cx="50" cy="48" r="12" 
+            fill="none" 
+            stroke="#ffffff" 
+            stroke-width="4"/>
+    <path d="M50 60 L50 72" 
+          stroke="#ffffff" 
+          stroke-width="4" 
+          stroke-linecap="round"/>
+  </g>
+  
+  <!-- Text: AuthNas -->
+  <text x="130" y="95" 
+        font-family="'Segoe UI', Helvetica, Arial, sans-serif" 
+        font-size="72" 
+        font-weight="700" 
+        fill="url(#purpleGradient)">AuthNas</text>
+  
+  <!-- Subtitle tagline -->
+  <text x="133" y="130" 
+        font-family="'Segoe UI', Helvetica, Arial, sans-serif" 
+        font-size="18" 
+        fill="#888888">Single Sign-On for Your Self-Hosted Universe</text>
+</svg>

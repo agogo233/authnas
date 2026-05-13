@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  traefik:
+    image: traefik:v3.0
+    container_name: traefik
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8081:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik/config.yml:/etc/traefik/config.yml:ro
+      - ./traefik/acme.json:/acme.json:ro
+      - ./traefik/logs:/var/log/traefik
+    networks:
+      - web
+    environment:
+      - TZ=Asia/Shanghai
+
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: auth-server
+    restart: unless-stopped
+    expose:
+      - "8080"
+    volumes:
+      - ./data:/app/data
+      - ./keys:/app/keys
+      - ./config:/app/config
+    environment:
+      - PORT=8080
+      - APP_URL=https://auth.example.com
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.authserver.rule=Host(`auth.example.com`)"
+      - "traefik.http.routers.authserver.entrypoints=websecure"
+      - "traefik.http.routers.authserver.tls=true"
+      - "traefik.http.services.authserver.loadbalancer.server.port=8080"
+      - "traefik.docker.network=web"
+    networks:
+      - web
+    depends_on:
+      - traefik
+
+networks:
+  web:
+    name: web
+    driver: bridge

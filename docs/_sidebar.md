@@ -1,0 +1,17 @@
+* [首页 | Home](/)
+* [快速开始 | Getting Started](Getting-Started.md)
+* [用户指南 | End-User Guide](End‐User-Usage.md)
+* 管理指南 | Admin Guides
+  * [OIDC 应用配置 | OIDC Setup](OIDC-Setup.md)
+  * [OIDC 集成示例 | OIDC Guides](OIDC-Guides.md)
+  * [ProxyAuth 代理认证 | ProxyAuth](ProxyAuth-and-Trusted-Header-SSO-Setup.md)
+  * [用户管理 | User Management](User-Management.md)
+  * [安全组 | Security Groups](Security-Groups.md)
+  * [密码重置 | Password Resets](Password-Resets.md)
+  * [邮件模板 | Email Templates](Email-Templates.md)
+  * [CLI 命令 | CLI Commands](CLI-Commands.md)
+  * [数据库迁移 | DB Migration](DB-Migration.md)
+  * [常见问题 | Troubleshooting](Troubleshooting.md)
+* 开发者指南 | Developer Guides
+  * [E2E 测试场景 | E2E Test Scenarios](_testing/e2e-test-scenarios-v2.md)
+  * [E2E 测试清单 | E2E Test Checklist](_testing/e2e-test-checklist.md)

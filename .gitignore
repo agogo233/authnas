@@ -1,0 +1,40 @@
+# Logs
+logs
+*.log
+
+# Coverage
+coverage
+*.lcov
+
+# Build output
+dist
+go-server/bin
+go-server/auth-server
+go-server/static
+
+# dotenv environment variable files
+.env
+.env.development.local
+.env.test.local
+.env.production.local
+.env.local
+
+# vscode-test
+.vscode-test
+
+# Node modules
+node_modules
+
+# default project volume directories
+/authnas
+/config
+/db
+go-server/data
+*.sqlite
+*.db-shm
+*.db-wal
+keys/private.pem
+
+# Playwright test results
+web/test-results/
+*.playwright-artifacts-*
