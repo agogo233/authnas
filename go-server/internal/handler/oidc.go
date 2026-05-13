@@ -2,6 +2,8 @@ package handler
 
 import (
 	"encoding/base64"
+	"encoding/json"
+	"log"
 	"math/big"
 	"net/http"
 	"net/url"
@@ -22,16 +24,57 @@ type OIDCHandler struct {
 	clientRepo  *service.ClientService
 	userService *service.UserService
 	csrfService *service.CSRFService
+	jwksCache   []byte
 }
 
 func NewOIDCHandler(cfg *config.Config, oidcService *service.OIDCService, clientRepo *service.ClientService, userService *service.UserService, csrfService *service.CSRFService) *OIDCHandler {
-	return &OIDCHandler{
+	h := &OIDCHandler{
 		cfg:         cfg,
 		oidcService: oidcService,
 		clientRepo:  clientRepo,
 		userService: userService,
 		csrfService: csrfService,
 	}
+	h.computeJWKSCache()
+	return h
+}
+
+func (h *OIDCHandler) computeJWKSCache() {
+	pubKey := h.oidcService.GetPublicKey()
+	if pubKey == nil {
+		log.Printf("[WARN] JWKS cache initialization skipped: public key not available")
+		return
+	}
+
+	jid := base64.RawURLEncoding.EncodeToString([]byte("authnas-key-1"))
+
+	nBytes := pubKey.N.Bytes()
+	n := base64.RawURLEncoding.EncodeToString(nBytes)
+
+	e := big.NewInt(int64(pubKey.E))
+	eBytes := e.Bytes()
+	exponent := base64.RawURLEncoding.EncodeToString(eBytes)
+
+	jwks := JWKS{
+		Keys: []JWK{
+			{
+				Kty: "RSA",
+				Use: "sig",
+				Kid: jid,
+				Alg: "RS256",
+				N:   n,
+				E:   exponent,
+			},
+		},
+	}
+
+	data, err := json.Marshal(jwks)
+	if err != nil {
+		log.Printf("[WARN] JWKS cache serialization failed: %v", err)
+		return
+	}
+
+	h.jwksCache = data
 }
 
 func (h *OIDCHandler) RegisterRoutes(r *gin.Engine) {
@@ -72,35 +115,12 @@ type JWKS struct {
 }
 
 func (h *OIDCHandler) JWKS(c *gin.Context) {
-	pubKey := h.oidcService.GetPublicKey()
-	if pubKey == nil {
+	if len(h.jwksCache) == 0 {
 		response.ServiceUnavailable(c, "public key not available")
 		return
 	}
 
-	jid := base64.RawURLEncoding.EncodeToString([]byte("authnas-key-1"))
-
-	nBytes := pubKey.N.Bytes()
-	n := base64.RawURLEncoding.EncodeToString(nBytes)
-
-	e := big.NewInt(int64(pubKey.E))
-	eBytes := e.Bytes()
-	exponent := base64.RawURLEncoding.EncodeToString(eBytes)
-
-	jwks := JWKS{
-		Keys: []JWK{
-			{
-				Kty: "RSA",
-				Use: "sig",
-				Kid: jid,
-				Alg: "RS256",
-				N:   n,
-				E:   exponent,
-			},
-		},
-	}
-
-	c.JSON(http.StatusOK, jwks)
+	c.Data(http.StatusOK, "application/json", h.jwksCache)
 }
 
 func (h *OIDCHandler) Authorization(c *gin.Context) {
@@ -162,7 +182,7 @@ func (h *OIDCHandler) Authorization(c *gin.Context) {
 }
 
 func (h *OIDCHandler) Token(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"error": "use POST for token endpoint"})
+	response.BadRequest(c, "use POST for token endpoint")
 }
 
 func (h *OIDCHandler) TokenPost(c *gin.Context) {
@@ -175,7 +195,7 @@ func (h *OIDCHandler) TokenPost(c *gin.Context) {
 	if req.GrantType == "authorization_code" {
 		tokenResp, err := h.oidcService.ExchangeCode(&req)
 		if err != nil {
-			response.BadRequest(c, err.Error())
+			response.BadRequest(c, safeErrorMessage(err, "oidc exchange code"))
 			return
 		}
 		response.Success(c, tokenResp)
@@ -185,7 +205,7 @@ func (h *OIDCHandler) TokenPost(c *gin.Context) {
 	if req.GrantType == "refresh_token" {
 		tokenResp, err := h.oidcService.RefreshAccessToken(&req)
 		if err != nil {
-			response.BadRequest(c, err.Error())
+			response.BadRequest(c, safeErrorMessage(err, "oidc refresh token"))
 			return
 		}
 		response.Success(c, tokenResp)
@@ -214,7 +234,7 @@ func (h *OIDCHandler) UserInfo(c *gin.Context) {
 
 	userInfo, err := h.oidcService.GetUserInfo(token)
 	if err != nil {
-		response.Unauthorized(c, err.Error())
+		response.Unauthorized(c, safeErrorMessage(err, "oidc userinfo"))
 		return
 	}
 

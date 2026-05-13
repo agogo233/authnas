@@ -150,14 +150,19 @@ func (h *UserHandler) UpdatePassword(c *gin.Context) {
 
 	var req UpdatePasswordRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c, err.Error())
+		response.BadRequest(c, "invalid request")
 		return
 	}
 
 	err := h.userService.UpdatePassword(user.ID, req.OldPassword, req.NewPassword)
 	if err != nil {
-		response.BadRequest(c, err.Error())
+		response.BadRequest(c, safeErrorMessage(err, "update password"))
 		return
+	}
+
+	if user.MustChangePassword {
+		user.MustChangePassword = false
+		h.userService.Update(user)
 	}
 
 	response.SuccessWithMessage(c, "password updated successfully")

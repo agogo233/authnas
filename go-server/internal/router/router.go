@@ -14,6 +14,7 @@ type Routers struct {
 	TOTPHandler          *handler.TOTPHandler
 	AdminHandler         *handler.AdminHandler
 	AdminSettingsHandler *handler.AdminSettingsHandler
+	AdminAuditHandler    *handler.AdminAuditHandler
 	OIDCHandler          *handler.OIDCHandler
 	ProxyAuthHandler     *handler.ProxyAuthHandler
 	AuthMiddleware       *middleware.AuthMiddleware
@@ -66,6 +67,9 @@ func (r *Routers) RegisterAdminRoutes(api *gin.RouterGroup) {
 	settings.GET("/ratelimit", r.AdminSettingsHandler.GetRateLimit)
 	settings.POST("/ratelimit", r.AdminSettingsHandler.SetRateLimit)
 	settings.POST("/email/test", r.AdminSettingsHandler.TestEmail)
+
+	audit := admin.Group("/audit")
+	audit.GET("/logs", r.AdminAuditHandler.ListAuditLogs)
 }
 
 func (r *Routers) RegisterOIDCRoutes(router *gin.Engine) {

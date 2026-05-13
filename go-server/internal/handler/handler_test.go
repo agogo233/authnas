@@ -136,7 +136,7 @@ func setupTestRouter(db *gorm.DB, cfg *config.Config) (*gin.Engine, *testService
 	invitationService := service.NewInvitationService(cfg, invitationRepo, userRepo)
 	proxyAuthService := service.NewProxyAuthService(cfg, proxyAuthRepo, userRepo)
 	emailService := service.NewEmailService(cfg, emailVerificationRepo, passwordResetRepo, emailLogRepo, emailSender)
-	userService := service.NewUserService(cfg, userRepo, groupRepo, keyRepo, totpRepo, passkeyRepo, emailVerificationRepo, passwordResetRepo, consentRepo, emailService, randomUtil, timeUtil)
+	userService := service.NewUserService(cfg, userRepo, groupRepo, keyRepo, totpRepo, passkeyRepo, emailVerificationRepo, passwordResetRepo, consentRepo, emailService, invitationService, randomUtil, timeUtil, db)
 	settingService := service.NewSystemSettingService(db)
 	if err := settingService.InitializeDefaults(); err != nil {
 		panic(err)

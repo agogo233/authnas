@@ -1,6 +1,7 @@
 package response
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -121,5 +122,26 @@ func MFARequired(c *gin.Context, message string) {
 		MFARequired: true,
 		Message:     message,
 		Code:        "MFA_REQUIRED",
+	})
+}
+
+// SafeError logs the full error internally and returns a safe message to the client.
+// Use this for errors from services, databases, or other internal operations
+// that may contain sensitive implementation details.
+func SafeError(c *gin.Context, statusCode int, err error, context string) {
+	log.Printf("[ERROR] %s: %v", context, err)
+	c.JSON(statusCode, ErrorResponse{
+		Success: false,
+		Message: "an internal error occurred",
+	})
+}
+
+// SafeErrorWithCode is like SafeError but allows specifying a custom error code.
+func SafeErrorWithCode(c *gin.Context, statusCode int, err error, context string, code string) {
+	log.Printf("[ERROR] %s: %v", context, err)
+	c.JSON(statusCode, ErrorResponse{
+		Success: false,
+		Message: "an internal error occurred",
+		Code:    code,
 	})
 }

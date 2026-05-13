@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/authnas/authnas/go-server/internal/config"
+	cryptopkg "github.com/authnas/authnas/go-server/pkg/crypto"
 	"github.com/authnas/authnas/go-server/pkg/utils"
 )
 
@@ -219,19 +220,19 @@ func TestAuthService_GetPublicKey_NoPrivateKey(t *testing.T) {
 }
 
 func TestAuthService_Constants(t *testing.T) {
-	if argon2Memory != 64*1024 {
-		t.Errorf("Expected argon2Memory to be 65536, got %d", argon2Memory)
+	if cryptopkg.Argon2Memory != 64*1024 {
+		t.Errorf("Expected argon2Memory to be 65536, got %d", cryptopkg.Argon2Memory)
 	}
-	if argon2Iterations != 3 {
-		t.Errorf("Expected argon2Iterations to be 3, got %d", argon2Iterations)
+	if cryptopkg.Argon2Iterations != 3 {
+		t.Errorf("Expected argon2Iterations to be 3, got %d", cryptopkg.Argon2Iterations)
 	}
-	if argon2Parallelism != 4 {
-		t.Errorf("Expected argon2Parallelism to be 4, got %d", argon2Parallelism)
+	if cryptopkg.Argon2Parallelism != 4 {
+		t.Errorf("Expected argon2Parallelism to be 4, got %d", cryptopkg.Argon2Parallelism)
 	}
-	if argon2SaltLength != 16 {
-		t.Errorf("Expected argon2SaltLength to be 16, got %d", argon2SaltLength)
+	if cryptopkg.Argon2SaltLength != 16 {
+		t.Errorf("Expected argon2SaltLength to be 16, got %d", cryptopkg.Argon2SaltLength)
 	}
-	if argon2KeyLength != 32 {
-		t.Errorf("Expected argon2KeyLength to be 32, got %d", argon2KeyLength)
+	if cryptopkg.Argon2KeyLength != 32 {
+		t.Errorf("Expected argon2KeyLength to be 32, got %d", cryptopkg.Argon2KeyLength)
 	}
 }

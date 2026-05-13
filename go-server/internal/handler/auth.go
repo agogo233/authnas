@@ -359,6 +359,24 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		return
 	}
 
+	if h.isSignupRequiresApproval() && !user.Approved {
+		response.Forbidden(c, "account pending admin approval")
+		return
+	}
+
+	if h.isEmailVerificationRequired() && !user.EmailVerified {
+		if h.emailService != nil && user.Email != nil && *user.Email != "" {
+			if _, err := h.userService.SendEmailVerification(user.ID); err != nil {
+				response.InternalServerError(c, "failed to send verification email")
+				return
+			}
+		}
+		response.Success(c, RegisterResponse{
+			Message: "verification email sent",
+		})
+		return
+	}
+
 	tokens, err := h.authService.GenerateTokenPair(user, c.GetHeader("User-Agent"))
 	if err != nil {
 		response.InternalServerError(c, "failed to generate tokens")

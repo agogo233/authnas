@@ -120,7 +120,7 @@ func (h *AdminHandler) ListUsers(c *gin.Context) {
 func (h *AdminHandler) CreateUser(c *gin.Context) {
 	var req CreateUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c, err.Error())
+		response.BadRequest(c, "invalid request")
 		return
 	}
 
@@ -140,7 +140,7 @@ func (h *AdminHandler) CreateUser(c *gin.Context) {
 
 	user, err := h.userService.Create(req.Email, req.Username, password)
 	if err != nil {
-		response.BadRequest(c, err.Error())
+		response.BadRequest(c, safeErrorMessage(err, "admin create user"))
 		return
 	}
 
@@ -196,7 +196,7 @@ func (h *AdminHandler) UpdateUser(c *gin.Context) {
 
 	var req UpdateUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c, err.Error())
+		response.BadRequest(c, "invalid request")
 		return
 	}
 
@@ -287,7 +287,7 @@ func (h *AdminHandler) ApproveUser(c *gin.Context) {
 
 	var req ApproveUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c, err.Error())
+		response.BadRequest(c, "invalid request")
 		return
 	}
 
@@ -312,7 +312,7 @@ func (h *AdminHandler) ResetPassword(c *gin.Context) {
 
 	var req ResetPasswordRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c, err.Error())
+		response.BadRequest(c, "invalid request")
 		return
 	}
 

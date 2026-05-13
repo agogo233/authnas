@@ -3,22 +3,19 @@ package service
 import (
 	"crypto/rsa"
 	"crypto/sha256"
-	"crypto/subtle"
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/pem"
 	"errors"
-	"fmt"
 	"github.com/authnas/authnas/go-server/internal/config"
 	"github.com/authnas/authnas/go-server/internal/model"
 	"github.com/authnas/authnas/go-server/internal/repository"
+	cryptopkg "github.com/authnas/authnas/go-server/pkg/crypto"
 	"github.com/authnas/authnas/go-server/pkg/utils"
 	"github.com/golang-jwt/jwt/v5"
-	"golang.org/x/crypto/argon2"
 	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/crypto/hkdf"
 	"os"
-	"strings"
 	"sync"
 	"time"
 )
@@ -103,54 +100,16 @@ func loadJWTPrivateKey(path string) (*rsa.PrivateKey, error) {
 	return key, nil
 }
 
-const (
-	argon2Memory      uint32 = 64 * 1024
-	argon2Iterations  uint32 = 3
-	argon2Parallelism uint8  = 4
-	argon2SaltLength         = 16
-	argon2KeyLength          = 32
-)
-
 func (s *AuthService) HashPassword(password string) (string, error) {
-	salt, err := s.random.GenerateRandomBytes(argon2SaltLength)
+	salt, err := s.random.GenerateRandomBytes(cryptopkg.Argon2SaltLength)
 	if err != nil {
 		return "", err
 	}
-	hash := argon2.IDKey([]byte(password), salt, argon2Iterations, argon2Memory, argon2Parallelism, argon2KeyLength)
-	return fmt.Sprintf("$argon2id$v=%d$m=%d,t=%d,p=%d$%s$%s",
-		argon2.Version, argon2Memory, argon2Iterations, argon2Parallelism,
-		base64.RawStdEncoding.EncodeToString(salt),
-		base64.RawStdEncoding.EncodeToString(hash[:])), nil
+	return cryptopkg.HashPassword(password, salt)
 }
 
 func (s *AuthService) VerifyPassword(hashWithSalt, password string) bool {
-	parts := strings.Split(hashWithSalt, "$")
-	if len(parts) != 6 {
-		return false
-	}
-
-	if parts[1] != "argon2id" || parts[2] != fmt.Sprintf("v=%d", argon2.Version) {
-		return false
-	}
-
-	var memory, iterations int
-	var parallelism uint8
-	if _, err := fmt.Sscanf(parts[3], "m=%d,t=%d,p=%d", &memory, &iterations, &parallelism); err != nil {
-		return false
-	}
-
-	salt, err := base64.RawStdEncoding.DecodeString(parts[4])
-	if err != nil || len(salt) != argon2SaltLength {
-		return false
-	}
-
-	expectedHash, err := base64.RawStdEncoding.DecodeString(parts[5])
-	if err != nil || len(expectedHash) != argon2KeyLength {
-		return false
-	}
-
-	actualHash := argon2.IDKey([]byte(password), salt, uint32(iterations), uint32(memory), parallelism, argon2KeyLength)
-	return subtle.ConstantTimeCompare(expectedHash, actualHash) == 1
+	return cryptopkg.VerifyPassword(hashWithSalt, password)
 }
 
 type loginAttempt struct {

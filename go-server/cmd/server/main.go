@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strings"
 	"syscall"
 	"time"
@@ -27,6 +28,40 @@ import (
 func main() {
 	if err := run(); err != nil {
 		log.Fatal(err)
+	}
+}
+
+// staticCacheHeaders sets Cache-Control headers for static assets.
+// Hashed assets (JS, CSS, images, fonts) get long-term caching.
+// HTML files get no-cache to ensure fresh content on each visit.
+func staticCacheHeaders() gin.HandlerFunc {
+	longCacheExts := map[string]bool{
+		".js":    true,
+		".css":   true,
+		".png":   true,
+		".jpg":   true,
+		".jpeg":  true,
+		".gif":   true,
+		".svg":   true,
+		".ico":   true,
+		".woff":  true,
+		".woff2": true,
+		".ttf":   true,
+		".eot":   true,
+		".otf":   true,
+		".webp":  true,
+		".avif":  true,
+		".map":   true,
+	}
+
+	return func(c *gin.Context) {
+		ext := strings.ToLower(filepath.Ext(c.Request.URL.Path))
+		if longCacheExts[ext] {
+			c.Header("Cache-Control", "public, max-age=31536000, immutable")
+		} else if ext == ".html" || c.Request.URL.Path == "/" {
+			c.Header("Cache-Control", "no-cache")
+		}
+		c.Next()
 	}
 }
 
@@ -67,9 +102,7 @@ func run() error {
 	totpService := service.NewTOTPService(cfg, totpRepo, userRepo)
 	emailService := service.NewEmailService(cfg, emailVerificationRepo, passwordResetRepo, emailLogRepo, emailSender)
 	invitationService := service.NewInvitationService(cfg, invitationRepo, userRepo)
-	userService := service.NewUserService(cfg, userRepo, groupRepo, keyRepo, totpRepo, passkeyRepo, emailVerificationRepo, passwordResetRepo, consentRepo, emailService, randomUtil, timeUtil)
-	userService.SetInvitationService(invitationService)
-	userService.SetDB(db)
+	userService := service.NewUserService(cfg, userRepo, groupRepo, keyRepo, totpRepo, passkeyRepo, emailVerificationRepo, passwordResetRepo, consentRepo, emailService, invitationService, randomUtil, timeUtil, db)
 	groupService := service.NewGroupService(cfg, groupRepo, userRepo)
 	clientService := service.NewClientService(cfg, clientRepo)
 	proxyAuthService := service.NewProxyAuthService(cfg, proxyAuthRepo, userRepo)
@@ -99,6 +132,11 @@ func run() error {
 	if err := settingService.InitializeDefaults(); err != nil {
 		log.Printf("Warning: failed to initialize system settings defaults: %v", err)
 	}
+
+	auditLogRepo := repository.NewAuditLogRepository(db)
+	auditService := service.NewAuditService(auditLogRepo)
+	adminAuditHandler := handler.NewAdminAuditHandler(auditService, auditLogRepo)
+
 	authMiddleware := middleware.NewAuthMiddleware(cfg, userRepo, keyRepo, authService)
 	authHandler := handler.NewAuthHandler(cfg, authService, userService, totpService, passkeyService, invitationService, emailService, settingService, csrfService, authMiddleware)
 	userHandler := handler.NewUserHandler(userService, totpService, passkeyService)
@@ -116,6 +154,7 @@ func run() error {
 		TOTPHandler:          totpHandler,
 		AdminHandler:         adminHandler,
 		AdminSettingsHandler: adminSettingsHandler,
+		AdminAuditHandler:    adminAuditHandler,
 		OIDCHandler:          oidcHandler,
 		ProxyAuthHandler:     proxyAuthHandler,
 		AuthMiddleware:       authMiddleware,
@@ -157,6 +196,8 @@ func run() error {
 
 		spaHandler(c)
 	})
+
+	r.Use(staticCacheHeaders())
 
 	r.Use(static.Serve("/", static.LocalFile("./static", false)))
 

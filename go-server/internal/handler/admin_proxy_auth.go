@@ -1,11 +1,64 @@
 package handler
 
 import (
+	"net/http"
+
+	"github.com/authnas/authnas/go-server/internal/config"
 	"github.com/authnas/authnas/go-server/internal/model"
+	"github.com/authnas/authnas/go-server/internal/repository"
 	"github.com/authnas/authnas/go-server/internal/response"
+	"github.com/authnas/authnas/go-server/internal/service"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
+
+type ProxyAuthHandler struct {
+	cfg           *config.Config
+	authService   *service.AuthService
+	userRepo      *repository.UserRepository
+	keyRepo       *repository.KeyRepository
+	groupRepo     *repository.GroupRepository
+}
+
+func NewProxyAuthHandler(
+	cfg *config.Config,
+	authService *service.AuthService,
+	userRepo *repository.UserRepository,
+	keyRepo *repository.KeyRepository,
+	groupRepo *repository.GroupRepository,
+) *ProxyAuthHandler {
+	return &ProxyAuthHandler{
+		cfg:         cfg,
+		authService: authService,
+		userRepo:    userRepo,
+		keyRepo:     keyRepo,
+		groupRepo:   groupRepo,
+	}
+}
+
+func (h *ProxyAuthHandler) ForwardAuth(c *gin.Context) {
+	token := c.GetHeader("X-Auth-Token")
+	if token == "" {
+		c.Status(http.StatusUnauthorized)
+		return
+	}
+
+	user, err := h.authService.ValidateToken(token)
+	if err != nil || user == nil {
+		c.Status(http.StatusUnauthorized)
+		return
+	}
+
+	c.Header("X-Auth-User-ID", user.UserID)
+	c.Header("X-Auth-Username", user.Username)
+	c.Status(http.StatusOK)
+}
+
+func (h *ProxyAuthHandler) AuthRequest(c *gin.Context) {
+	response.Success(c, gin.H{
+		"authURL": h.cfg.App.URL + "/login",
+	})
+}
 
 type ProxyAuthListResponse struct {
 	ProxyAuths []ProxyAuthListItem `json:"proxyauths"`

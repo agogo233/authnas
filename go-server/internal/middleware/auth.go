@@ -91,6 +91,15 @@ func (am *AuthMiddleware) Authenticate() gin.HandlerFunc {
 			return
 		}
 
+		if user.MustChangePassword {
+			path := c.Request.URL.Path
+			if path != "/api/user/change-password" && path != "/api/user/password" {
+				response.ErrorWithCode(c, 403, "password change required", "MUST_CHANGE_PASSWORD")
+				c.Abort()
+				return
+			}
+		}
+
 		c.Set("user", user)
 		c.Set("claims", claims)
 		c.Next()

@@ -57,6 +57,25 @@ func (r *KeyRepository) FindByRefreshToken(token string) (*model.Key, error) {
 	return &key, nil
 }
 
+func (r *KeyRepository) FindByRefreshTokenForUpdate(tx *gorm.DB, token string) (*model.Key, error) {
+	h := sha256.Sum256([]byte(token))
+	lookupHash := base64.RawStdEncoding.EncodeToString(h[:])
+
+	var key model.Key
+	err := tx.Set("gorm:query_option", "FOR UPDATE").
+		Where("refresh_token_lookup_hash = ? AND expires_at > ?", lookupHash, time.Now()).
+		First(&key).Error
+	if err != nil {
+		return nil, gorm.ErrRecordNotFound
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(key.RefreshTokenHash), []byte(token)); err != nil {
+		return nil, gorm.ErrRecordNotFound
+	}
+
+	return &key, nil
+}
+
 func (r *KeyRepository) GetByUserID(userID string) ([]*model.Key, error) {
 	var keys []*model.Key
 	err := r.db.Where("user_id = ?", userID).Find(&keys).Error

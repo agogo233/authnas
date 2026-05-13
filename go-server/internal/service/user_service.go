@@ -1,22 +1,26 @@
 package service
 
 import (
-	"crypto/subtle"
-	"encoding/base64"
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/authnas/authnas/go-server/internal/config"
 	"github.com/authnas/authnas/go-server/internal/model"
 	"github.com/authnas/authnas/go-server/internal/repository"
+	cryptopkg "github.com/authnas/authnas/go-server/pkg/crypto"
 	"github.com/authnas/authnas/go-server/pkg/utils"
 	"github.com/google/uuid"
 	"github.com/nbutton23/zxcvbn-go"
-	"golang.org/x/crypto/argon2"
 	"gorm.io/gorm"
 )
+
+// InvitationVerifier defines the interface for invitation validation and consumption.
+// This breaks the circular dependency between UserService and InvitationService.
+type InvitationVerifier interface {
+	ValidateInvitation(id, code string) (*InvitationValidation, error)
+	ConsumeInvitation(tx *gorm.DB, id string) error
+}
 
 type UserService struct {
 	cfg                   *config.Config
@@ -29,7 +33,7 @@ type UserService struct {
 	passwordResetRepo     *repository.PasswordResetRepository
 	consentRepo           *repository.ConsentRepository
 	emailService          *EmailService
-	invitationService     *InvitationService
+	invitationService     InvitationVerifier
 	random                *utils.RandomUtil
 	time                  *utils.TimeUtil
 	db                    *gorm.DB
@@ -46,8 +50,10 @@ func NewUserService(
 	passwordResetRepo *repository.PasswordResetRepository,
 	consentRepo *repository.ConsentRepository,
 	emailService *EmailService,
+	invitationService InvitationVerifier,
 	random *utils.RandomUtil,
 	time *utils.TimeUtil,
+	db *gorm.DB,
 ) *UserService {
 	return &UserService{
 		cfg:                   cfg,
@@ -60,17 +66,11 @@ func NewUserService(
 		passwordResetRepo:     passwordResetRepo,
 		consentRepo:           consentRepo,
 		emailService:          emailService,
+		invitationService:     invitationService,
 		random:                random,
 		time:                  time,
+		db:                    db,
 	}
-}
-
-func (s *UserService) SetInvitationService(invitationService *InvitationService) {
-	s.invitationService = invitationService
-}
-
-func (s *UserService) SetDB(db *gorm.DB) {
-	s.db = db
 }
 
 func (s *UserService) GetConfig() *config.Config {
@@ -603,17 +603,18 @@ func (s *UserService) EnsureInitialAdmin(username, email, password string) error
 
 	now := s.time.Now()
 	admin := &model.User{
-		ID:            uuid.New().String(),
-		Email:         emailPtr,
-		Username:      username,
-		PasswordHash:  stringPtr(passwordHash),
-		EmailVerified: true,
-		Approved:      true,
-		IsAdmin:       true,
-		MFARequired:   false,
-		TokenVersion:  0,
-		CreatedAt:     now,
-		UpdatedAt:     now,
+		ID:                 uuid.New().String(),
+		Email:              emailPtr,
+		Username:           username,
+		PasswordHash:       stringPtr(passwordHash),
+		EmailVerified:      true,
+		Approved:           true,
+		IsAdmin:            true,
+		MFARequired:        false,
+		TokenVersion:       0,
+		MustChangePassword: true,
+		CreatedAt:          now,
+		UpdatedAt:          now,
 	}
 
 	if err := s.userRepo.Create(admin); err != nil {
@@ -631,54 +632,13 @@ func stringPtr(s string) *string {
 }
 
 func (s *UserService) hashPassword(password string) (string, error) {
-	const (
-		argon2Memory      uint32 = 64 * 1024
-		argon2Iterations  uint32 = 3
-		argon2Parallelism uint8  = 4
-		argon2SaltLength         = 16
-		argon2KeyLength          = 32
-	)
-	salt, err := s.random.GenerateRandomBytes(argon2SaltLength)
+	salt, err := s.random.GenerateRandomBytes(cryptopkg.Argon2SaltLength)
 	if err != nil {
 		return "", err
 	}
-	hash := argon2.IDKey([]byte(password), salt, argon2Iterations, argon2Memory, argon2Parallelism, argon2KeyLength)
-	return fmt.Sprintf("$argon2id$v=%d$m=%d,t=%d,p=%d$%s$%s",
-		argon2.Version, argon2Memory, argon2Iterations, argon2Parallelism,
-		base64.RawStdEncoding.EncodeToString(salt),
-		base64.RawStdEncoding.EncodeToString(hash[:])), nil
+	return cryptopkg.HashPassword(password, salt)
 }
 
 func (s *UserService) verifyPassword(hashWithSalt, password string) bool {
-	const (
-		argon2SaltLength = 16
-		argon2KeyLength  = 32
-	)
-	parts := strings.Split(hashWithSalt, "$")
-	if len(parts) != 6 {
-		return false
-	}
-
-	if parts[1] != "argon2id" || parts[2] != fmt.Sprintf("v=%d", argon2.Version) {
-		return false
-	}
-
-	var memory, iterations int
-	var parallelism uint8
-	if _, err := fmt.Sscanf(parts[3], "m=%d,t=%d,p=%d", &memory, &iterations, &parallelism); err != nil {
-		return false
-	}
-
-	salt, err := base64.RawStdEncoding.DecodeString(parts[4])
-	if err != nil || len(salt) != argon2SaltLength {
-		return false
-	}
-
-	expectedHash, err := base64.RawStdEncoding.DecodeString(parts[5])
-	if err != nil || len(expectedHash) != argon2KeyLength {
-		return false
-	}
-
-	actualHash := argon2.IDKey([]byte(password), salt, uint32(iterations), uint32(memory), parallelism, argon2KeyLength)
-	return subtle.ConstantTimeCompare(expectedHash, actualHash) == 1
+	return cryptopkg.VerifyPassword(hashWithSalt, password)
 }

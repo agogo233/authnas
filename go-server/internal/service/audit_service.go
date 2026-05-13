@@ -4,6 +4,10 @@ import (
 	"encoding/json"
 	"log"
 	"time"
+
+	"github.com/authnas/authnas/go-server/internal/model"
+	"github.com/authnas/authnas/go-server/internal/repository"
+	"github.com/google/uuid"
 )
 
 type AuditEventType string
@@ -41,12 +45,14 @@ type AuditEvent struct {
 }
 
 type AuditService struct {
-	enabled bool
+	enabled   bool
+	auditRepo *repository.AuditLogRepository
 }
 
-func NewAuditService() *AuditService {
+func NewAuditService(auditRepo *repository.AuditLogRepository) *AuditService {
 	return &AuditService{
-		enabled: true,
+		enabled:   true,
+		auditRepo: auditRepo,
 	}
 }
 
@@ -64,6 +70,31 @@ func (s *AuditService) Log(event AuditEvent) {
 	}
 
 	log.Printf("[AUDIT] %s", string(data))
+
+	if s.auditRepo != nil {
+		metadataJSON := ""
+		if len(event.Metadata) > 0 {
+			metaBytes, _ := json.Marshal(event.Metadata)
+			metadataJSON = string(metaBytes)
+		}
+
+		auditLog := &model.AuditLog{
+			ID:           uuid.New().String(),
+			Timestamp:    event.Timestamp,
+			EventType:    string(event.EventType),
+			UserID:       event.UserID,
+			Username:     event.Username,
+			ClientID:     event.ClientID,
+			IPAddress:    event.IPAddress,
+			UserAgent:    event.UserAgent,
+			Success:      event.Success,
+			ErrorMessage: event.ErrorMessage,
+			Metadata:     metadataJSON,
+		}
+		if err := s.auditRepo.Create(auditLog); err != nil {
+			log.Printf("[AUDIT ERROR] failed to persist audit event: %v", err)
+		}
+	}
 }
 
 func (s *AuditService) LogLoginSuccess(userID, username, ipAddress, userAgent string) {

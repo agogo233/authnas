@@ -26,6 +26,15 @@ func (r *UserRepository) GetByID(id string) (*model.User, error) {
 	return &user, nil
 }
 
+func (r *UserRepository) GetByIDForUpdate(tx *gorm.DB, id string) (*model.User, error) {
+	var user model.User
+	err := tx.Set("gorm:query_option", "FOR UPDATE").First(&user, "id = ?", id).Error
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
 func (r *UserRepository) GetByEmail(email string) (*model.User, error) {
 	var user model.User
 	err := r.db.First(&user, "email = ?", email).Error

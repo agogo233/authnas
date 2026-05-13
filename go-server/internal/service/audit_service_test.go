@@ -5,7 +5,7 @@ import (
 )
 
 func TestAuditService_NewAuditService(t *testing.T) {
-	svc := NewAuditService()
+	svc := NewAuditService(nil)
 	if svc == nil {
 		t.Fatal("NewAuditService should not return nil")
 	}
@@ -24,7 +24,7 @@ func TestAuditService_Log_Disabled(t *testing.T) {
 }
 
 func TestAuditService_Log_Enabled(t *testing.T) {
-	svc := NewAuditService()
+	svc := NewAuditService(nil)
 	svc.Log(AuditEvent{
 		EventType: AuditEventLoginSuccess,
 		UserID:    "user123",
@@ -36,87 +36,87 @@ func TestAuditService_Log_Enabled(t *testing.T) {
 }
 
 func TestAuditService_LogLoginSuccess(t *testing.T) {
-	svc := NewAuditService()
+	svc := NewAuditService(nil)
 	svc.LogLoginSuccess("user123", "testuser", "192.168.1.1", "Mozilla/5.0")
 }
 
 func TestAuditService_LogLoginFailed(t *testing.T) {
-	svc := NewAuditService()
+	svc := NewAuditService(nil)
 	svc.LogLoginFailed("user123", "testuser", "192.168.1.1", "Mozilla/5.0", "invalid password")
 }
 
 func TestAuditService_LogLogout(t *testing.T) {
-	svc := NewAuditService()
+	svc := NewAuditService(nil)
 	svc.LogLogout("user123", "testuser", "192.168.1.1", "Mozilla/5.0")
 }
 
 func TestAuditService_LogPasswordReset(t *testing.T) {
-	svc := NewAuditService()
+	svc := NewAuditService(nil)
 	svc.LogPasswordReset("user123", "testuser", "192.168.1.1", true, "")
 }
 
 func TestAuditService_LogPasswordResetRequest(t *testing.T) {
-	svc := NewAuditService()
+	svc := NewAuditService(nil)
 	svc.LogPasswordResetRequest("test@example.com", "192.168.1.1")
 }
 
 func TestAuditService_LogUserCreated(t *testing.T) {
-	svc := NewAuditService()
+	svc := NewAuditService(nil)
 	svc.LogUserCreated("admin123", "user123", "newuser")
 }
 
 func TestAuditService_LogUserUpdated(t *testing.T) {
-	svc := NewAuditService()
+	svc := NewAuditService(nil)
 	svc.LogUserUpdated("admin123", "user123")
 }
 
 func TestAuditService_LogUserDeleted(t *testing.T) {
-	svc := NewAuditService()
+	svc := NewAuditService(nil)
 	svc.LogUserDeleted("admin123", "user123", "deleteduser")
 }
 
 func TestAuditService_LogAdminPasswordReset(t *testing.T) {
-	svc := NewAuditService()
+	svc := NewAuditService(nil)
 	svc.LogAdminPasswordReset("admin123", "user123", "testuser")
 }
 
 func TestAuditService_LogMFAEnabled(t *testing.T) {
-	svc := NewAuditService()
+	svc := NewAuditService(nil)
 	svc.LogMFAEnabled("user123", "testuser")
 }
 
 func TestAuditService_LogMFADisabled(t *testing.T) {
-	svc := NewAuditService()
+	svc := NewAuditService(nil)
 	svc.LogMFADisabled("user123", "testuser")
 }
 
 func TestAuditService_LogPasskeyRegistered(t *testing.T) {
-	svc := NewAuditService()
+	svc := NewAuditService(nil)
 	svc.LogPasskeyRegistered("user123", "testuser", "cred123")
 }
 
 func TestAuditService_LogPasskeyDeleted(t *testing.T) {
-	svc := NewAuditService()
+	svc := NewAuditService(nil)
 	svc.LogPasskeyDeleted("user123", "testuser", "cred123")
 }
 
 func TestAuditService_LogTokenRefreshed(t *testing.T) {
-	svc := NewAuditService()
+	svc := NewAuditService(nil)
 	svc.LogTokenRefreshed("user123", "client123")
 }
 
 func TestAuditService_LogTokenRevoked(t *testing.T) {
-	svc := NewAuditService()
+	svc := NewAuditService(nil)
 	svc.LogTokenRevoked("user123")
 }
 
 func TestAuditService_LogSessionRevoked(t *testing.T) {
-	svc := NewAuditService()
+	svc := NewAuditService(nil)
 	svc.LogSessionRevoked("user123", "session123")
 }
 
 func TestAuditService_Log_WithMetadata(t *testing.T) {
-	svc := NewAuditService()
+	svc := NewAuditService(nil)
 	svc.Log(AuditEvent{
 		EventType: AuditEventLoginSuccess,
 		UserID:    "user123",
@@ -186,7 +186,7 @@ func TestAuditEvent_Structure(t *testing.T) {
 }
 
 func TestAuditService_Log_CustomTimestamp(t *testing.T) {
-	svc := NewAuditService()
+	svc := NewAuditService(nil)
 	event := AuditEvent{
 		EventType: AuditEventLoginSuccess,
 		UserID:    "user123",
@@ -196,7 +196,7 @@ func TestAuditService_Log_CustomTimestamp(t *testing.T) {
 }
 
 func TestAuditService_LogEventWithEmptyFields(t *testing.T) {
-	svc := NewAuditService()
+	svc := NewAuditService(nil)
 	svc.Log(AuditEvent{
 		EventType: AuditEventLoginFailed,
 		Success:   false,
@@ -230,7 +230,7 @@ func TestAuditService_AuditEvent_AllFields(t *testing.T) {
 }
 
 func TestAuditService_LogMultipleEvents(t *testing.T) {
-	svc := NewAuditService()
+	svc := NewAuditService(nil)
 	svc.LogLoginSuccess("user1", "user1", "1.1.1.1", "Agent1")
 	svc.LogLoginFailed("user2", "user2", "2.2.2.2", "Agent2", "failed")
 	svc.LogLogout("user3", "user3", "3.3.3.3", "Agent3")
@@ -266,7 +266,7 @@ func TestAuditService_AuditEventTypes_Uniqueness(t *testing.T) {
 }
 
 func TestAuditService_Log_VerifyOutputFormat(t *testing.T) {
-	svc := NewAuditService()
+	svc := NewAuditService(nil)
 	event := AuditEvent{
 		EventType: AuditEventLoginSuccess,
 		UserID:    "test-user",

@@ -604,155 +604,171 @@ func (s *OIDCService) RefreshAccessToken(req *TokenRequest) (*TokenResponse, err
 		return nil, errors.New("refresh token required")
 	}
 
-	key, err := s.keyRepo.FindByRefreshToken(req.RefreshToken)
-	if err != nil || key == nil {
-		return nil, errors.New("invalid refresh token")
-	}
-
-	if key.ExpiresAt.Before(time.Now()) {
-		s.keyRepo.Delete(key.ID)
-		return nil, errors.New("refresh token expired")
-	}
-
-	user, err := s.userRepo.GetByID(key.UserID)
-	if err != nil || user == nil {
-		return nil, errors.New("user not found")
-	}
-
-	if key.TokenVersion != user.TokenVersion {
-		s.keyRepo.Delete(key.ID)
-		return nil, errors.New("session has been revoked")
-	}
-
-	if key.ClientID != "" {
-		if key.ClientID != req.ClientID {
-			return nil, errors.New("client_id mismatch: refresh token was not issued to this client")
+	var result *TokenResponse
+	err := s.db.Transaction(func(tx *gorm.DB) error {
+		key, err := s.keyRepo.FindByRefreshTokenForUpdate(tx, req.RefreshToken)
+		if err != nil || key == nil {
+			return errors.New("invalid refresh token")
 		}
-		client, err := s.clientRepo.GetByClientID(key.ClientID)
-		if err != nil || client == nil {
-			return nil, errors.New("invalid client")
+
+		if key.ExpiresAt.Before(time.Now()) {
+			tx.Delete(&model.Key{}, "id = ?", key.ID)
+			return errors.New("refresh token expired")
 		}
-		if client.ClientSecret != nil && *client.ClientSecret != "" {
-			if req.ClientSecret == "" || *client.ClientSecret != req.ClientSecret {
-				return nil, errors.New("invalid client_secret")
+
+		user, err := s.userRepo.GetByIDForUpdate(tx, key.UserID)
+		if err != nil || user == nil {
+			return errors.New("user not found")
+		}
+
+		if key.TokenVersion != user.TokenVersion {
+			tx.Delete(&model.Key{}, "id = ?", key.ID)
+			return errors.New("session has been revoked")
+		}
+
+		if key.ClientID != "" {
+			if key.ClientID != req.ClientID {
+				return errors.New("client_id mismatch: refresh token was not issued to this client")
+			}
+			client, err := s.clientRepo.GetByClientID(key.ClientID)
+			if err != nil || client == nil {
+				return errors.New("invalid client")
+			}
+			if client.ClientSecret != nil && *client.ClientSecret != "" {
+				if req.ClientSecret == "" || *client.ClientSecret != req.ClientSecret {
+					if !isValidPreviousSecret(client, req.ClientSecret) {
+						return errors.New("invalid client_secret")
+					}
+				}
 			}
 		}
-	}
 
-	cachedGroupNames := key.GroupNames
-	var groupNames []string
-	if cachedGroupNames != "" {
-		groupNames = strings.Split(cachedGroupNames, ",")
-	} else {
-		groups, _ := s.groupRepo.GetUserGroups(user.ID)
-		for _, g := range groups {
-			groupNames = append(groupNames, g.Name)
+		cachedGroupNames := key.GroupNames
+		var groupNames []string
+		if cachedGroupNames != "" {
+			groupNames = strings.Split(cachedGroupNames, ",")
+		} else {
+			groups, _ := s.groupRepo.GetUserGroups(user.ID)
+			for _, g := range groups {
+				groupNames = append(groupNames, g.Name)
+			}
 		}
-	}
 
-	email := derefString(user.Email)
-	name := derefString(user.Name)
+		email := derefString(user.Email)
+		name := derefString(user.Name)
 
-	accessClaims := jwt.MapClaims{
-		"sub":    user.ID,
-		"aud":    req.ClientID,
-		"exp":    time.Now().Add(time.Hour).Unix(),
-		"iat":    time.Now().Unix(),
-		"email":  email,
-		"name":   name,
-		"groups": groupNames,
-	}
-	accessToken := jwt.NewWithClaims(jwt.SigningMethodRS256, accessClaims)
-	accessTokenString, err := accessToken.SignedString(s.privateKey)
-	if err != nil {
-		return nil, err
-	}
+		accessClaims := jwt.MapClaims{
+			"sub":    user.ID,
+			"aud":    req.ClientID,
+			"exp":    time.Now().Add(time.Hour).Unix(),
+			"iat":    time.Now().Unix(),
+			"email":  email,
+			"name":   name,
+			"groups": groupNames,
+		}
+		accessToken := jwt.NewWithClaims(jwt.SigningMethodRS256, accessClaims)
+		accessTokenString, err := accessToken.SignedString(s.privateKey)
+		if err != nil {
+			return err
+		}
 
-	refreshTokenStr, err := s.random.GenerateToken(32)
-	if err != nil {
-		return nil, err
-	}
+		refreshTokenStr, err := s.random.GenerateToken(32)
+		if err != nil {
+			return err
+		}
 
-	refreshExpiry := s.cfg.JWT.GetRefreshTokenExpiry()
-	clientID := key.ClientID
-	if req.ClientID != "" {
-		clientID = req.ClientID
-	}
+		refreshExpiry := s.cfg.JWT.GetRefreshTokenExpiry()
+		clientID := key.ClientID
+		if req.ClientID != "" {
+			clientID = req.ClientID
+		}
 
-	hashedNewRefreshToken, err := bcrypt.GenerateFromPassword([]byte(refreshTokenStr), bcrypt.DefaultCost)
-	if err != nil {
-		return nil, err
-	}
+		hashedNewRefreshToken, err := bcrypt.GenerateFromPassword([]byte(refreshTokenStr), bcrypt.DefaultCost)
+		if err != nil {
+			return err
+		}
 
-	h := sha256.Sum256([]byte(refreshTokenStr))
-	lookupHash := base64.RawStdEncoding.EncodeToString(h[:])
+		h := sha256.Sum256([]byte(refreshTokenStr))
+		lookupHash := base64.RawStdEncoding.EncodeToString(h[:])
 
-	var groupNamesToCache string
-	if cachedGroupNames != "" {
-		groupNamesToCache = cachedGroupNames
-	} else {
-		groupNamesToCache = strings.Join(groupNames, ",")
-	}
+		var groupNamesToCache string
+		if cachedGroupNames != "" {
+			groupNamesToCache = cachedGroupNames
+		} else {
+			groupNamesToCache = strings.Join(groupNames, ",")
+		}
 
-	newKey := &model.Key{
-		ID:                     generateID(),
-		UserID:                 user.ID,
-		ClientID:               clientID,
-		TokenVersion:           user.TokenVersion,
-		RefreshTokenHash:       string(hashedNewRefreshToken),
-		RefreshTokenLookupHash: lookupHash,
-		ExpiresAt:              time.Now().Add(refreshExpiry),
-		CreatedAt:              time.Now(),
-		GroupNames:             groupNamesToCache,
-	}
+		newKey := &model.Key{
+			ID:                     generateID(),
+			UserID:                 user.ID,
+			ClientID:               clientID,
+			TokenVersion:           user.TokenVersion,
+			RefreshTokenHash:       string(hashedNewRefreshToken),
+			RefreshTokenLookupHash: lookupHash,
+			ExpiresAt:              time.Now().Add(refreshExpiry),
+			CreatedAt:              time.Now(),
+			GroupNames:             groupNamesToCache,
+		}
 
-	idTokenClaims := &OIDCClaims{
-		Issuer:    s.cfg.OIDC.Issuer,
-		Subject:   user.ID,
-		Audience:  clientID,
-		ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
-		IssuedAt:  jwt.NewNumericDate(time.Now()),
-		AuthTime:  key.CreatedAt.Unix(),
-		Nonce:     key.Nonce,
-		Email:     email,
-		Name:      name,
-		Groups:    groupNames,
-	}
-	idToken := jwt.NewWithClaims(jwt.SigningMethodRS256, idTokenClaims)
-	idTokenString, err := idToken.SignedString(s.privateKey)
-	if err != nil {
-		return nil, err
-	}
+		idTokenClaims := &OIDCClaims{
+			Issuer:    s.cfg.OIDC.Issuer,
+			Subject:   user.ID,
+			Audience:  clientID,
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			AuthTime:  key.CreatedAt.Unix(),
+			Nonce:     key.Nonce,
+			Email:     email,
+			Name:      name,
+			Groups:    groupNames,
+		}
+		idToken := jwt.NewWithClaims(jwt.SigningMethodRS256, idTokenClaims)
+		idTokenString, err := idToken.SignedString(s.privateKey)
+		if err != nil {
+			return err
+		}
 
-	var finalRefreshToken string
-	err = s.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(newKey).Error; err != nil {
 			return err
 		}
 		if err := tx.Delete(&model.Key{}, "id = ?", key.ID).Error; err != nil {
 			return err
 		}
-		finalRefreshToken = refreshTokenStr
+
+		accessExpiry := s.cfg.JWT.GetAccessTokenExpiry()
+		expiresIn := int(accessExpiry.Seconds())
+		expiresAt := time.Now().Add(accessExpiry).Format("2006-01-02T15:04:05Z07:00")
+
+		result = &TokenResponse{
+			AccessToken:  accessTokenString,
+			TokenType:    "Bearer",
+			ExpiresIn:    expiresIn,
+			ExpiresAt:    expiresAt,
+			RefreshToken: refreshTokenStr,
+			IDToken:      idTokenString,
+			Scope:        "openid profile email groups",
+		}
 		return nil
 	})
 
 	if err != nil {
-		return nil, errors.New("failed to refresh token")
+		return nil, err
 	}
 
-	accessExpiry := s.cfg.JWT.GetAccessTokenExpiry()
-	expiresIn := int(accessExpiry.Seconds())
-	expiresAt := time.Now().Add(accessExpiry).Format("2006-01-02T15:04:05Z07:00")
+	return result, nil
+}
 
-	return &TokenResponse{
-		AccessToken:  accessTokenString,
-		TokenType:    "Bearer",
-		ExpiresIn:    expiresIn,
-		ExpiresAt:    expiresAt,
-		RefreshToken: finalRefreshToken,
-		IDToken:      idTokenString,
-		Scope:        "openid profile email groups",
-	}, nil
+func isValidPreviousSecret(client *model.Client, providedSecret string) bool {
+	if client.PreviousClientSecret == nil || *client.PreviousClientSecret == "" {
+		return false
+	}
+	if client.ClientSecretRotatedAt == nil {
+		return false
+	}
+	if time.Since(*client.ClientSecretRotatedAt) > 24*time.Hour {
+		return false
+	}
+	return *client.PreviousClientSecret == providedSecret
 }
 
 type OIDCClaims struct {

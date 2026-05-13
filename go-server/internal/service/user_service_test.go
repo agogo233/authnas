@@ -92,8 +92,10 @@ func newTestUserService(db *gorm.DB) *UserService {
 		passwordResetRepo,
 		consentRepo,
 		nil,
+		nil,
 		randomUtil,
 		timeUtil,
+		db,
 	)
 }
 
@@ -865,20 +867,6 @@ func TestUserService_ResetPasswordByCode_ExpiredCode(t *testing.T) {
 	err = svc.ResetPasswordByCode(code, "newpassword")
 	if err == nil {
 		t.Error("Should fail with expired code")
-	}
-}
-
-func TestUserService_SetInvitationService(t *testing.T) {
-	db, cleanup := setupUserServiceTestDB(t)
-	defer cleanup()
-
-	svc := newTestUserService(db)
-
-	invSvc := NewInvitationService(nil, nil, nil)
-	svc.SetInvitationService(invSvc)
-
-	if svc.invitationService != invSvc {
-		t.Error("Invitation service should be set")
 	}
 }
 
