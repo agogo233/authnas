@@ -38,8 +38,8 @@ describe('adminClientsApi', () => {
       const result = await adminClientsApi.list()
 
       expect(apiClient.get).toHaveBeenCalledWith('/admin/clients')
-      expect(result.data.data.length).toBe(2)
-      expect(result.data.data[0].name).toBe('My App')
+      expect(result.data.data!.length).toBe(2)
+      expect(result.data.data![0].name).toBe('My App')
     })
 
     it('should return empty list when no clients', async () => {
@@ -50,7 +50,7 @@ describe('adminClientsApi', () => {
 
       const result = await adminClientsApi.list()
 
-      expect(result.data.data).toEqual([])
+      expect(result.data.data!).toEqual([])
       expect(result.data.total).toBe(0)
     })
   })
@@ -74,7 +74,7 @@ describe('adminClientsApi', () => {
       const result = await adminClientsApi.get('client-123')
 
       expect(apiClient.get).toHaveBeenCalledWith('/admin/clients/client-123')
-      expect(result.data.data.clientId).toBe('my-client-id')
+      expect(result.data.data!.clientId).toBe('my-client-id')
     })
   })
 
@@ -115,7 +115,7 @@ describe('adminClientsApi', () => {
         responseTypes: 'code',
         scopes: 'openid profile',
       })
-      expect(result.data.data.id).toBe('new-client-123')
+      expect(result.data.data!.id).toBe('new-client-123')
     })
 
     it('should call POST /admin/clients with only required fields', async () => {
@@ -141,7 +141,7 @@ describe('adminClientsApi', () => {
         clientId: 'minimal-client',
         name: 'Minimal Client',
       })
-      expect(result.data.data.name).toBe('Minimal Client')
+      expect(result.data.data!.name).toBe('Minimal Client')
     })
   })
 

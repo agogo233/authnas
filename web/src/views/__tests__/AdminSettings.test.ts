@@ -312,7 +312,7 @@ describe('AdminSettings.vue', () => {
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
       ;(apiClient.get as any).mockRejectedValue(new Error('Network error'))
 
-      const wrapper = mount(AdminSettings, mountOptions)
+      mount(AdminSettings, mountOptions)
       await flushPromises()
 
       expect(consoleSpy).toHaveBeenCalledWith('获取配置失败:', expect.any(Error))

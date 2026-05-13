@@ -193,7 +193,7 @@ async function handleRegister() {
             placeholder="请输入邮箱"
             size="large"
             aria-label="邮箱"
-            type="email"
+            type="text"
             autocomplete="email"
           />
         </NFormItem>

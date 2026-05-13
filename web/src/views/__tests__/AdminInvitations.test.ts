@@ -261,7 +261,7 @@ describe('AdminInvitations.vue', () => {
         data: { success: true, data: mockGroups },
       } as any)
 
-      const wrapper = mount(AdminInvitations, mountOptions)
+      mount(AdminInvitations, mountOptions)
       await flushPromises()
 
       expect(mockMessage.error).toHaveBeenCalledWith('Failed to fetch invitations')

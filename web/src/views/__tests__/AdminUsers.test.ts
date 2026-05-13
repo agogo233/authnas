@@ -288,7 +288,7 @@ describe('AdminUsers.vue', () => {
         response: { data: { message: 'Failed to fetch users' } },
       })
 
-      const wrapper = mount(AdminUsers, mountOptions)
+      mount(AdminUsers, mountOptions)
       await flushPromises()
 
       expect(mockMessage.error).toHaveBeenCalledWith('Failed to fetch users')

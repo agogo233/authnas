@@ -1,10 +1,10 @@
-import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-let isRefreshingModule = false
-let failedQueueModule: Array<{ resolve: (token: string) => void; reject: (error: any) => void }> =
-  []
-
-const mockAuthStore = {
+const mockAuthStore: {
+  accessToken: string | null
+  refreshAccessToken: ReturnType<typeof vi.fn>
+  logout: ReturnType<typeof vi.fn>
+} = {
   accessToken: 'test-access-token',
   refreshAccessToken: vi.fn().mockResolvedValue(true),
   logout: vi.fn(),
@@ -24,13 +24,6 @@ describe('apiClient', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.resetModules()
-    isRefreshingModule = false
-    failedQueueModule = []
-  })
-
-  beforeAll(() => {
-    isRefreshingModule = false
-    failedQueueModule = []
   })
 
   describe('request interceptor', () => {
@@ -42,7 +35,7 @@ describe('apiClient', () => {
         method: 'GET',
       }
 
-      const interceptor = apiClient.interceptors.request.handlers[0]
+      const interceptor = apiClient.interceptors.request.handlers![0]
       if (interceptor?.fulfilled) {
         const result = await interceptor.fulfilled(mockRequest as any)
         expect(result.headers.Authorization).toBe('Bearer test-access-token')
@@ -58,7 +51,7 @@ describe('apiClient', () => {
         method: 'GET',
       }
 
-      const interceptor = apiClient.interceptors.request.handlers[0]
+      const interceptor = apiClient.interceptors.request.handlers![0]
       if (interceptor?.fulfilled) {
         const result = await interceptor.fulfilled(mockRequest as any)
         expect(result.headers.Authorization).toBeUndefined()
@@ -78,7 +71,7 @@ describe('apiClient', () => {
         method: 'POST',
       }
 
-      const interceptor = apiClient.interceptors.request.handlers[0]
+      const interceptor = apiClient.interceptors.request.handlers![0]
       if (interceptor?.fulfilled) {
         const result = await interceptor.fulfilled(mockRequest as any)
         expect(result.headers['X-CSRF-Token']).toBe('test-csrf-token')
@@ -98,7 +91,7 @@ describe('apiClient', () => {
         method: 'PUT',
       }
 
-      const interceptor = apiClient.interceptors.request.handlers[0]
+      const interceptor = apiClient.interceptors.request.handlers![0]
       if (interceptor?.fulfilled) {
         const result = await interceptor.fulfilled(mockRequest as any)
         expect(result.headers['X-CSRF-Token']).toBe('put-csrf-token')
@@ -118,7 +111,7 @@ describe('apiClient', () => {
         method: 'DELETE',
       }
 
-      const interceptor = apiClient.interceptors.request.handlers[0]
+      const interceptor = apiClient.interceptors.request.handlers![0]
       if (interceptor?.fulfilled) {
         const result = await interceptor.fulfilled(mockRequest as any)
         expect(result.headers['X-CSRF-Token']).toBe('delete-csrf-token')
@@ -138,7 +131,7 @@ describe('apiClient', () => {
         method: 'PATCH',
       }
 
-      const interceptor = apiClient.interceptors.request.handlers[0]
+      const interceptor = apiClient.interceptors.request.handlers![0]
       if (interceptor?.fulfilled) {
         const result = await interceptor.fulfilled(mockRequest as any)
         expect(result.headers['X-CSRF-Token']).toBe('patch-csrf-token')
@@ -158,7 +151,7 @@ describe('apiClient', () => {
         method: 'GET',
       }
 
-      const interceptor = apiClient.interceptors.request.handlers[0]
+      const interceptor = apiClient.interceptors.request.handlers![0]
       if (interceptor?.fulfilled) {
         const result = await interceptor.fulfilled(mockRequest as any)
         expect(result.headers['X-CSRF-Token']).toBeUndefined()
@@ -178,7 +171,7 @@ describe('apiClient', () => {
         method: 'POST',
       }
 
-      const interceptor = apiClient.interceptors.request.handlers[0]
+      const interceptor = apiClient.interceptors.request.handlers![0]
       if (interceptor?.fulfilled) {
         const result = await interceptor.fulfilled(mockRequest as any)
         expect(result.headers['X-CSRF-Token']).toBeUndefined()
@@ -190,7 +183,6 @@ describe('apiClient', () => {
     it('should redirect to login on CSRF token error', async () => {
       vi.resetModules()
       const { default: apiClient } = await import('@/api/client')
-      const { default: router } = await import('@/router')
 
       const error = {
         response: {
@@ -199,7 +191,7 @@ describe('apiClient', () => {
         },
       }
 
-      const interceptor = apiClient.interceptors.response.handlers[1]
+      const interceptor = apiClient.interceptors.response.handlers![1]
       if (interceptor?.rejected) {
         await expect(interceptor.rejected(error)).rejects.toEqual(error)
       }
@@ -226,7 +218,7 @@ describe('apiClient', () => {
       vi.resetModules()
       const { default: apiClient } = await import('@/api/client')
 
-      const interceptor = apiClient.interceptors.request.handlers[0]
+      const interceptor = apiClient.interceptors.request.handlers![0]
       if (interceptor?.fulfilled) {
         const mockRequest = { headers: {}, method: 'POST' }
         const result = await interceptor.fulfilled(mockRequest as any)
@@ -243,7 +235,7 @@ describe('apiClient', () => {
       vi.resetModules()
       const { default: apiClient } = await import('@/api/client')
 
-      const interceptor = apiClient.interceptors.request.handlers[0]
+      const interceptor = apiClient.interceptors.request.handlers![0]
       if (interceptor?.fulfilled) {
         const mockRequest = { headers: {}, method: 'POST' }
         const result = await interceptor.fulfilled(mockRequest as any)
@@ -260,7 +252,7 @@ describe('apiClient', () => {
       vi.resetModules()
       const { default: apiClient } = await import('@/api/client')
 
-      const interceptor = apiClient.interceptors.request.handlers[0]
+      const interceptor = apiClient.interceptors.request.handlers![0]
       if (interceptor?.fulfilled) {
         const mockRequest = { headers: {}, method: 'POST' }
         const result = await interceptor.fulfilled(mockRequest as any)
@@ -273,7 +265,7 @@ describe('apiClient', () => {
     it('should reject on request interceptor error', async () => {
       const { default: apiClient } = await import('@/api/client')
 
-      const interceptor = apiClient.interceptors.request.handlers[0]
+      const interceptor = apiClient.interceptors.request.handlers![0]
       if (interceptor?.rejected) {
         const error = new Error('Request config error')
         await expect(interceptor.rejected(error)).rejects.toThrow('Request config error')
@@ -296,7 +288,7 @@ describe('apiClient', () => {
         config: { _retry: false, headers: {} },
       }
 
-      const interceptor = apiClient.interceptors.response.handlers[1]
+      const interceptor = apiClient.interceptors.response.handlers![1]
       if (interceptor?.rejected) {
         await expect(interceptor.rejected(error)).rejects.toBeDefined()
       }
@@ -316,7 +308,7 @@ describe('apiClient', () => {
         config: { _retry: false, headers: {} },
       }
 
-      const interceptor = apiClient.interceptors.response.handlers[1]
+      const interceptor = apiClient.interceptors.response.handlers![1]
       if (interceptor?.rejected) {
         await expect(interceptor.rejected(error)).rejects.toBeDefined()
       }
@@ -336,7 +328,7 @@ describe('apiClient', () => {
         config: { _retry: false, headers: {} },
       }
 
-      const interceptor = apiClient.interceptors.response.handlers[1]
+      const interceptor = apiClient.interceptors.response.handlers![1]
       if (interceptor?.rejected) {
         await expect(interceptor.rejected(error)).rejects.toBeDefined()
       }
@@ -356,7 +348,7 @@ describe('apiClient', () => {
         config: { _retry: false },
       }
 
-      const interceptor = apiClient.interceptors.response.handlers[1]
+      const interceptor = apiClient.interceptors.response.handlers![1]
       if (interceptor?.rejected) {
         await expect(interceptor.rejected(error)).rejects.toEqual(error)
       }
@@ -373,7 +365,7 @@ describe('apiClient', () => {
         config: { _retry: false },
       }
 
-      const interceptor = apiClient.interceptors.response.handlers[1]
+      const interceptor = apiClient.interceptors.response.handlers![1]
       if (interceptor?.rejected) {
         await expect(interceptor.rejected(error)).rejects.toEqual(error)
       }
@@ -388,7 +380,7 @@ describe('apiClient', () => {
         config: { _retry: false },
       }
 
-      const interceptor = apiClient.interceptors.response.handlers[1]
+      const interceptor = apiClient.interceptors.response.handlers![1]
       if (interceptor?.rejected) {
         await expect(interceptor.rejected(error)).rejects.toEqual(error)
       }
@@ -403,7 +395,7 @@ describe('apiClient', () => {
         config: undefined,
       }
 
-      const interceptor = apiClient.interceptors.response.handlers[1]
+      const interceptor = apiClient.interceptors.response.handlers![1]
       if (interceptor?.rejected) {
         await expect(interceptor.rejected(error)).rejects.toEqual(error)
       }
@@ -423,7 +415,7 @@ describe('apiClient', () => {
         config: { _retry: true, headers: {} },
       }
 
-      const interceptor = apiClient.interceptors.response.handlers[1]
+      const interceptor = apiClient.interceptors.response.handlers![1]
       if (interceptor?.rejected) {
         await expect(interceptor.rejected(error)).rejects.toEqual(error)
       }
@@ -445,7 +437,7 @@ describe('apiClient', () => {
       mockAuthStore.refreshAccessToken = vi.fn().mockResolvedValue(true)
       mockAuthStore.accessToken = 'new-token-after-refresh'
 
-      const interceptor = apiClient.interceptors.response.handlers[1]
+      const interceptor = apiClient.interceptors.response.handlers![1]
       if (interceptor?.rejected) {
         await expect(interceptor.rejected(successError)).resolves.toBeDefined()
       }
@@ -464,7 +456,7 @@ describe('apiClient', () => {
         config: { _retry: false, headers: {} },
       }
 
-      const interceptor = apiClient.interceptors.response.handlers[1]
+      const interceptor = apiClient.interceptors.response.handlers![1]
       if (interceptor?.rejected) {
         await expect(interceptor.rejected(error)).rejects.toBeDefined()
       }
@@ -488,7 +480,7 @@ describe('apiClient', () => {
         config: { _retry: false, headers: {} },
       }
 
-      const interceptor = apiClient.interceptors.response.handlers[1]
+      const interceptor = apiClient.interceptors.response.handlers![1]
       if (interceptor?.rejected) {
         const promise1 = interceptor.rejected(error1)
         const promise2 = interceptor.rejected(error2)
@@ -517,7 +509,7 @@ describe('apiClient', () => {
         config: { _retry: false },
       }
 
-      const interceptor = apiClient.interceptors.response.handlers[1]
+      const interceptor = apiClient.interceptors.response.handlers![1]
       if (interceptor?.rejected) {
         await expect(interceptor.rejected(error)).rejects.toBeDefined()
       }
@@ -536,7 +528,7 @@ describe('apiClient', () => {
         },
       }
 
-      const interceptor = apiClient.interceptors.response.handlers[1]
+      const interceptor = apiClient.interceptors.response.handlers![1]
       if (interceptor?.rejected) {
         await expect(interceptor.rejected(error)).rejects.toEqual(error)
       }
@@ -553,7 +545,7 @@ describe('apiClient', () => {
         },
       }
 
-      const interceptor = apiClient.interceptors.response.handlers[1]
+      const interceptor = apiClient.interceptors.response.handlers![1]
       if (interceptor?.rejected) {
         await expect(interceptor.rejected(error)).rejects.toEqual(error)
       }

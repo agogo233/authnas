@@ -114,8 +114,8 @@ describe('AdminProxyAuth.vue', () => {
   })
 
   const mockGroups: Group[] = [
-    { id: '1', name: 'Admin Group', description: 'Admin users' },
-    { id: '2', name: 'User Group', description: 'Regular users' },
+    { id: '1', name: 'Admin Group', description: 'Admin users', createdAt: '2024-01-01' },
+    { id: '2', name: 'User Group', description: 'Regular users', createdAt: '2024-01-01' },
   ]
 
   const mockProxyAuths: ProxyAuth[] = [
@@ -479,7 +479,7 @@ describe('AdminProxyAuth.vue', () => {
         data: { success: true, data: mockGroups },
       } as any)
 
-      const wrapper = mount(AdminProxyAuth, mountOptions)
+      mount(AdminProxyAuth, mountOptions)
       await flushPromises()
 
       expect(mockMessage.error).toHaveBeenCalled()

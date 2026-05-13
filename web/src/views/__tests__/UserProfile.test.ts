@@ -321,7 +321,7 @@ describe('UserProfile.vue', () => {
         response: { data: { message: 'Failed to load' } },
       })
 
-      const wrapper = mount(UserProfile, mountOptions)
+      mount(UserProfile, mountOptions)
       await flushPromises()
 
       expect(mockMessage.error).toHaveBeenCalledWith('加载用户信息失败')

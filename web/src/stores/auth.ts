@@ -155,9 +155,9 @@ export const useAuthStore = defineStore('auth', () => {
       const userData = response.data.data
       user.value = {
         id: userData.id,
-        email: userData.email,
+        email: userData.email ?? undefined,
         username: userData.username,
-        name: userData.name,
+        name: userData.name ?? undefined,
         emailVerified: userData.emailVerified,
         approved: userData.approved,
         isAdmin: userData.isAdmin,
@@ -167,8 +167,8 @@ export const useAuthStore = defineStore('auth', () => {
         hasPassword: userData.hasPassword,
         tokenVersion: userData.tokenVersion,
         createdAt: userData.createdAt,
-        updatedAt: userData.updatedAt,
-        expiresAt: userData.expiresAt,
+        updatedAt: userData.updatedAt ?? undefined,
+        expiresAt: userData.expiresAt ?? undefined,
       }
     } catch {
       user.value = null

@@ -25,7 +25,7 @@ describe('authApi', () => {
       const result = await authApi.getCsrfToken()
 
       expect(apiClient.get).toHaveBeenCalledWith('/auth/csrf')
-      expect(result.data.data.token).toBe('csrf-token')
+      expect(result.data.data!.token).toBe('csrf-token')
     })
   })
 
@@ -62,7 +62,7 @@ describe('authApi', () => {
         password: 'password123',
         remember: true,
       })
-      expect(result.data.data.accessToken).toBe('access-token')
+      expect(result.data.data!.accessToken).toBe('access-token')
     })
   })
 
@@ -119,7 +119,7 @@ describe('authApi', () => {
       const result = await authApi.passkeyStart({ username: 'testuser' })
 
       expect(apiClient.post).toHaveBeenCalledWith('/auth/passkey/start', { username: 'testuser' })
-      expect(result.data.data.challenge).toBe('challenge')
+      expect(result.data.data!.challenge).toBe('challenge')
     })
   })
 
@@ -205,7 +205,7 @@ describe('authApi', () => {
       const result = await authApi.getInvitation('invite-123', 'challenge')
 
       expect(apiClient.get).toHaveBeenCalledWith('/auth/invitation/invite-123/challenge')
-      expect(result.data.data.email).toBe('test@example.com')
+      expect(result.data.data!.email).toBe('test@example.com')
     })
   })
 
@@ -271,7 +271,7 @@ describe('userApi', () => {
       const result = await userApi.getMe()
 
       expect(apiClient.get).toHaveBeenCalledWith('/user/me')
-      expect(result.data.data.username).toBe('test')
+      expect(result.data.data!.username).toBe('test')
     })
   })
 
@@ -295,7 +295,7 @@ describe('userApi', () => {
       const result = await userApi.updateMe({ name: 'Updated Name' })
 
       expect(apiClient.put).toHaveBeenCalledWith('/user/me', { name: 'Updated Name' })
-      expect(result.data.data.username).toBe('updated')
+      expect(result.data.data!.username).toBe('updated')
     })
   })
 
@@ -332,7 +332,7 @@ describe('userApi', () => {
       const result = await userApi.getSessions()
 
       expect(apiClient.get).toHaveBeenCalledWith('/user/me/sessions')
-      expect(result.data.data.length).toBe(2)
+      expect(result.data.data!.length).toBe(2)
     })
   })
 
@@ -380,7 +380,7 @@ describe('passkeyApi', () => {
       const result = await passkeyApi.registrationStart()
 
       expect(apiClient.post).toHaveBeenCalledWith('/passkey/registration/start')
-      expect(result.data.data.challenge).toBe('challenge')
+      expect(result.data.data!.challenge).toBe('challenge')
     })
   })
 
@@ -411,7 +411,7 @@ describe('passkeyApi', () => {
         options: '{}',
         name: 'My Passkey',
       })
-      expect(result.data.data.name).toBe('My Passkey')
+      expect(result.data.data!.name).toBe('My Passkey')
     })
   })
 
@@ -441,7 +441,7 @@ describe('passkeyApi', () => {
       const result = await passkeyApi.getPasskeys()
 
       expect(apiClient.get).toHaveBeenCalledWith('/passkey')
-      expect(result.data.data.length).toBe(2)
+      expect(result.data.data!.length).toBe(2)
     })
   })
 
@@ -475,7 +475,7 @@ describe('totpApi', () => {
       const result = await totpApi.register()
 
       expect(apiClient.post).toHaveBeenCalledWith('/totp/registration')
-      expect(result.data.data.qr_code_uri).toBe('otpauth://totp/Test')
+      expect(result.data.data!.qr_code_uri).toBe('otpauth://totp/Test')
     })
   })
 

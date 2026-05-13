@@ -15,7 +15,7 @@ import {
   NDrawerContent,
   NAlert,
 } from 'naive-ui'
-import type { Group, User } from '@/types'
+import type { Group } from '@/types'
 import { adminApi, type CreateGroupRequest, type UpdateGroupRequest } from '@/api/admin'
 
 const message = useMessage()
@@ -32,7 +32,6 @@ const groupForm = ref<CreateGroupRequest>({
 
 const showMembersDrawer = ref(false)
 const selectedGroup = ref<Group | null>(null)
-const groupMembers = ref<User[]>([])
 
 const columns = [
   { title: '名称', key: 'name' },
@@ -131,12 +130,6 @@ async function handleDelete(id: string) {
   } catch (err: any) {
     message.error(err.response?.data?.message || '删除用户组失败')
   }
-}
-
-async function openMembersDrawer(group: Group) {
-  selectedGroup.value = group
-  groupMembers.value = []
-  showMembersDrawer.value = true
 }
 
 onMounted(() => {

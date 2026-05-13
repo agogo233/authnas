@@ -25,7 +25,7 @@ describe('adminUsersApi', () => {
       const result = await adminUsersApi.count()
 
       expect(apiClient.get).toHaveBeenCalledWith('/admin/users/count')
-      expect(result.data.data.total).toBe(100)
+      expect(result.data.data!.total).toBe(100)
     })
   })
 
@@ -45,7 +45,7 @@ describe('adminUsersApi', () => {
       const result = await adminUsersApi.list()
 
       expect(apiClient.get).toHaveBeenCalledWith('/admin/users')
-      expect(result.data.data).toEqual([])
+      expect(result.data.data!).toEqual([])
     })
 
     it('should call GET /admin/users with pagination params', async () => {
@@ -124,7 +124,7 @@ describe('adminUsersApi', () => {
       const result = await adminUsersApi.get('user-123')
 
       expect(apiClient.get).toHaveBeenCalledWith('/admin/users/user-123')
-      expect(result.data.data.username).toBe('testuser')
+      expect(result.data.data!.username).toBe('testuser')
     })
   })
 
@@ -166,7 +166,7 @@ describe('adminUsersApi', () => {
         approved: true,
         mfaRequired: false,
       })
-      expect(result.data.data.username).toBe('newuser')
+      expect(result.data.data!.username).toBe('newuser')
     })
 
     it('should call POST /admin/users without optional fields', async () => {

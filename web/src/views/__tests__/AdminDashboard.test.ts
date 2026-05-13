@@ -230,7 +230,7 @@ describe('AdminDashboard.vue', () => {
       vi.mocked(adminModule.adminApi.clients.list).mockRejectedValue(new Error('Network error'))
       vi.mocked(adminModule.adminApi.invitations.list).mockRejectedValue(new Error('Network error'))
 
-      const wrapper = mount(AdminDashboard, mountOptions)
+      mount(AdminDashboard, mountOptions)
       await flushPromises()
 
       expect(mockMessage.error).toHaveBeenCalled()

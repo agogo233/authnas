@@ -218,7 +218,7 @@ describe('AdminClients.vue', () => {
         response: { data: { message: 'Failed to fetch clients' } },
       })
 
-      const wrapper = mount(AdminClients, mountOptions)
+      mount(AdminClients, mountOptions)
       await flushPromises()
 
       expect(mockMessage.error).toHaveBeenCalledWith('Failed to fetch clients')

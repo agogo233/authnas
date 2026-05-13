@@ -37,8 +37,8 @@ describe('adminGroupsApi', () => {
       const result = await adminGroupsApi.list()
 
       expect(apiClient.get).toHaveBeenCalledWith('/admin/groups')
-      expect(result.data.data.length).toBe(2)
-      expect(result.data.data[0].name).toBe('Admins')
+      expect(result.data.data!.length).toBe(2)
+      expect(result.data.data![0].name).toBe('Admins')
     })
 
     it('should return empty list when no groups', async () => {
@@ -49,7 +49,7 @@ describe('adminGroupsApi', () => {
 
       const result = await adminGroupsApi.list()
 
-      expect(result.data.data).toEqual([])
+      expect(result.data.data!).toEqual([])
       expect(result.data.total).toBe(0)
     })
   })
@@ -72,7 +72,7 @@ describe('adminGroupsApi', () => {
       const result = await adminGroupsApi.get('group-123')
 
       expect(apiClient.get).toHaveBeenCalledWith('/admin/groups/group-123')
-      expect(result.data.data.name).toBe('Test Group')
+      expect(result.data.data!.name).toBe('Test Group')
     })
 
     it('should return group without description', async () => {
@@ -90,7 +90,7 @@ describe('adminGroupsApi', () => {
 
       const result = await adminGroupsApi.get('group-456')
 
-      expect(result.data.data.description).toBeUndefined()
+      expect(result.data.data!.description).toBeUndefined()
     })
   })
 
@@ -118,7 +118,7 @@ describe('adminGroupsApi', () => {
         name: 'New Group',
         description: 'A new group',
       })
-      expect(result.data.data.id).toBe('new-group-123')
+      expect(result.data.data!.id).toBe('new-group-123')
     })
 
     it('should call POST /admin/groups with only name', async () => {
@@ -137,7 +137,7 @@ describe('adminGroupsApi', () => {
       const result = await adminGroupsApi.create({ name: 'Name Only Group' })
 
       expect(apiClient.post).toHaveBeenCalledWith('/admin/groups', { name: 'Name Only Group' })
-      expect(result.data.data.name).toBe('Name Only Group')
+      expect(result.data.data!.name).toBe('Name Only Group')
     })
   })
 
@@ -165,7 +165,7 @@ describe('adminGroupsApi', () => {
         name: 'Updated Group',
         description: 'Updated description',
       })
-      expect(result.data.data.name).toBe('Updated Group')
+      expect(result.data.data!.name).toBe('Updated Group')
     })
 
     it('should update only name', async () => {

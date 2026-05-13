@@ -11,7 +11,7 @@ vi.mock('@/api/client', () => ({
 }))
 
 describe('adminInvitationsApi', () => {
-  const mockedApiClient = apiClient as ReturnType<typeof vi.fn> & {
+  const mockedApiClient = apiClient as unknown as {
     get: ReturnType<typeof vi.fn>
     post: ReturnType<typeof vi.fn>
     delete: ReturnType<typeof vi.fn>

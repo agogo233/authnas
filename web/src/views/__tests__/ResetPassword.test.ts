@@ -245,7 +245,7 @@ describe('ResetPassword.vue', () => {
       const { authApi } = await import('@/api/auth')
       vi.mocked(authApi.forgotPassword)
         .mockRejectedValueOnce({ response: { data: { message: 'First error' } } })
-        .mockResolvedValueOnce({ data: { success: true } })
+        .mockResolvedValueOnce({ data: { success: true } } as any)
 
       const wrapper = mount(ResetPassword, mountOptions)
       const vm = wrapper.vm as any
@@ -266,7 +266,7 @@ describe('ResetPassword.vue', () => {
     it('sets loading to true during submission', async () => {
       const { authApi } = await import('@/api/auth')
       vi.mocked(authApi.forgotPassword).mockImplementation(
-        () => new Promise((resolve) => setTimeout(() => resolve({ data: { success: true } }), 100))
+        () => new Promise((resolve) => setTimeout(() => resolve({ data: { success: true } } as any), 100))
       )
 
       const wrapper = mount(ResetPassword, mountOptions)
@@ -286,7 +286,7 @@ describe('ResetPassword.vue', () => {
     it('disables button during loading', async () => {
       const { authApi } = await import('@/api/auth')
       vi.mocked(authApi.forgotPassword).mockImplementation(
-        () => new Promise((resolve) => setTimeout(() => resolve({ data: { success: true } }), 100))
+        () => new Promise((resolve) => setTimeout(() => resolve({ data: { success: true } } as any), 100))
       )
 
       const wrapper = mount(ResetPassword, mountOptions)

@@ -35,7 +35,8 @@ onMounted(async () => {
     if (response.data.success && response.data.data) {
       const data = response.data.data
       clientName.value = data.client?.name || '未知应用'
-      clientLogo.value = isSafeLogoUri(data.client?.logoUri) ? data.client.logoUri : ''
+      const logoUri = data.client?.logoUri
+      clientLogo.value = logoUri && isSafeLogoUri(logoUri) ? logoUri : ''
       scopes.value = data.scopes || []
       claims.value = data.claims || {}
     }

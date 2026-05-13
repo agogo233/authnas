@@ -46,9 +46,9 @@ describe('adminProxyAuthApi', () => {
       const result = await adminProxyAuthApi.list()
 
       expect(apiClient.get).toHaveBeenCalledWith('/admin/proxyauth')
-      expect(result.data.data.length).toBe(2)
-      expect(result.data.data[0].name).toBe('Auth Proxy 1')
-      expect(result.data.data[0].enabled).toBe(true)
+      expect(result.data.data!.length).toBe(2)
+      expect(result.data.data![0].name).toBe('Auth Proxy 1')
+      expect(result.data.data![0].enabled).toBe(true)
     })
 
     it('should return empty list when no proxy auth configs', async () => {
@@ -59,7 +59,7 @@ describe('adminProxyAuthApi', () => {
 
       const result = await adminProxyAuthApi.list()
 
-      expect(result.data.data).toEqual([])
+      expect(result.data.data!).toEqual([])
       expect(result.data.total).toBe(0)
     })
   })
@@ -84,8 +84,8 @@ describe('adminProxyAuthApi', () => {
       const result = await adminProxyAuthApi.get('proxy-123')
 
       expect(apiClient.get).toHaveBeenCalledWith('/admin/proxyauth/proxy-123')
-      expect(result.data.data.name).toBe('Test Proxy')
-      expect(result.data.data.proxyUrl).toBe('https://test-proxy.example.com')
+      expect(result.data.data!.name).toBe('Test Proxy')
+      expect(result.data.data!.proxyUrl).toBe('https://test-proxy.example.com')
     })
   })
 
@@ -125,7 +125,7 @@ describe('adminProxyAuthApi', () => {
         groupId: 'group-123',
         enabled: true,
       })
-      expect(result.data.data.id).toBe('new-proxy-123')
+      expect(result.data.data!.id).toBe('new-proxy-123')
     })
 
     it('should call POST /admin/proxyauth with only required fields', async () => {
@@ -155,7 +155,7 @@ describe('adminProxyAuthApi', () => {
         proxyUrl: 'https://min-proxy.example.com',
         headerName: 'X-User',
       })
-      expect(result.data.data.enabled).toBe(false)
+      expect(result.data.data!.enabled).toBe(false)
     })
 
     it('should create proxy auth disabled by default', async () => {

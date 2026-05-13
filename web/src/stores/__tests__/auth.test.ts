@@ -238,7 +238,7 @@ describe('auth store', () => {
       const authStore = useAuthStore()
       await authStore.initFromStorage()
 
-      apiClient.get.mockClear()
+      vi.mocked(apiClient.get).mockClear()
       await authStore.initFromStorage()
 
       expect(apiClient.get).not.toHaveBeenCalled()

@@ -245,7 +245,7 @@ describe('AdminGroups.vue', () => {
         response: { data: { message: 'Failed to fetch groups' } },
       })
 
-      const wrapper = mount(AdminGroups, mountOptions)
+      mount(AdminGroups, mountOptions)
       await flushPromises()
 
       expect(mockMessage.error).toHaveBeenCalledWith('Failed to fetch groups')

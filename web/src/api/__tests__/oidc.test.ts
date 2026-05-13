@@ -31,8 +31,8 @@ describe('oidcApi', () => {
       const result = await oidcApi.getInteraction('test-uid')
 
       expect(apiClient.get).toHaveBeenCalledWith('/oidc/interaction/test-uid')
-      expect(result.data.data.uid).toBe('test-uid')
-      expect(result.data.data.client.name).toBe('Test App')
+      expect(result.data.data!.uid).toBe('test-uid')
+      expect(result.data.data!.client.name).toBe('Test App')
     })
 
     it('should return interaction with logoUri', async () => {
@@ -52,7 +52,7 @@ describe('oidcApi', () => {
 
       const result = await oidcApi.getInteraction('uid-1')
 
-      expect(result.data.data.client.logoUri).toBe('https://example.com/logo.png')
+      expect(result.data.data!.client.logoUri).toBe('https://example.com/logo.png')
     })
   })
 
@@ -66,7 +66,7 @@ describe('oidcApi', () => {
       const result = await oidcApi.confirmInteraction('test-uid')
 
       expect(apiClient.post).toHaveBeenCalledWith('/oidc/interaction/test-uid/confirm')
-      expect(result.data.data.redirectTo).toBe('https://example.com/callback')
+      expect(result.data.data!.redirectTo).toBe('https://example.com/callback')
     })
 
     it('should return redirect URL after confirmation', async () => {
@@ -77,7 +77,7 @@ describe('oidcApi', () => {
 
       const result = await oidcApi.confirmInteraction('uid-123')
 
-      expect(result.data.data.redirectTo).toBe('https://app.example.com/dashboard')
+      expect(result.data.data!.redirectTo).toBe('https://app.example.com/dashboard')
     })
   })
 
@@ -91,7 +91,7 @@ describe('oidcApi', () => {
       const result = await oidcApi.cancelInteraction('test-uid')
 
       expect(apiClient.delete).toHaveBeenCalledWith('/oidc/interaction/test-uid/cancel')
-      expect(result.data.data.redirectTo).toBe('https://example.com/cancel')
+      expect(result.data.data!.redirectTo).toBe('https://example.com/cancel')
     })
   })
 
@@ -116,8 +116,8 @@ describe('oidcApi', () => {
         grant_type: 'refresh_token',
         refresh_token: 'refresh-token-123',
       })
-      expect(result.data.data.accessToken).toBe('new-access-token')
-      expect(result.data.data.refreshToken).toBe('new-refresh-token')
+      expect(result.data.data!.accessToken).toBe('new-access-token')
+      expect(result.data.data!.refreshToken).toBe('new-refresh-token')
     })
 
     it('should include expiresIn in response', async () => {
@@ -131,7 +131,7 @@ describe('oidcApi', () => {
 
       const result = await oidcApi.refreshToken('refresh')
 
-      expect(result.data.data.expiresIn).toBe(7200)
+      expect(result.data.data!.expiresIn).toBe(7200)
     })
   })
 
@@ -145,7 +145,7 @@ describe('oidcApi', () => {
       const result = await oidcApi.logout()
 
       expect(apiClient.get).toHaveBeenCalledWith('/oidc/logout')
-      expect(result.data.data.redirectTo).toBe('/login')
+      expect(result.data.data!.redirectTo).toBe('/login')
     })
 
     it('should call GET /oidc/logout with idTokenHint', async () => {

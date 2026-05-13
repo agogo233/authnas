@@ -43,8 +43,8 @@ describe('adminInvitationsApi', () => {
       const result = await adminInvitationsApi.list()
 
       expect(apiClient.get).toHaveBeenCalledWith('/admin/invitations')
-      expect(result.data.data.length).toBe(2)
-      expect(result.data.data[0].email).toBe('user1@example.com')
+      expect(result.data.data!.length).toBe(2)
+      expect(result.data.data![0].email).toBe('user1@example.com')
     })
 
     it('should return empty list when no invitations', async () => {
@@ -55,7 +55,7 @@ describe('adminInvitationsApi', () => {
 
       const result = await adminInvitationsApi.list()
 
-      expect(result.data.data).toEqual([])
+      expect(result.data.data!).toEqual([])
       expect(result.data.total).toBe(0)
     })
   })
@@ -80,8 +80,8 @@ describe('adminInvitationsApi', () => {
       const result = await adminInvitationsApi.get('invitation-123')
 
       expect(apiClient.get).toHaveBeenCalledWith('/admin/invitations/invitation-123')
-      expect(result.data.data.email).toBe('test@example.com')
-      expect(result.data.data.code).toBe('TESTCODE123')
+      expect(result.data.data!.email).toBe('test@example.com')
+      expect(result.data.data!.code).toBe('TESTCODE123')
     })
 
     it('should return invitation without username', async () => {
@@ -101,7 +101,7 @@ describe('adminInvitationsApi', () => {
 
       const result = await adminInvitationsApi.get('invitation-456')
 
-      expect(result.data.data.username).toBeUndefined()
+      expect(result.data.data!.username).toBeUndefined()
     })
   })
 
@@ -139,7 +139,7 @@ describe('adminInvitationsApi', () => {
         maxUses: 5,
         expiresAt: '2024-12-31',
       })
-      expect(result.data.data.id).toBe('new-inv-123')
+      expect(result.data.data!.id).toBe('new-inv-123')
     })
 
     it('should call POST /admin/invitations with only required fields', async () => {
@@ -164,7 +164,7 @@ describe('adminInvitationsApi', () => {
       expect(apiClient.post).toHaveBeenCalledWith('/admin/invitations', {
         email: 'user@example.com',
       })
-      expect(result.data.data.email).toBe('user@example.com')
+      expect(result.data.data!.email).toBe('user@example.com')
     })
 
     it('should create invitation with scopes only', async () => {

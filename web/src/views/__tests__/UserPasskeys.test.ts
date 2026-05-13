@@ -90,22 +90,18 @@ describe('UserPasskeys.vue', () => {
       userId: 'user1',
       name: 'My Laptop',
       credentialId: 'cred-1-abc123',
-      publicKey: 'pub-key-1',
-      counter: 1,
-      deviceType: 'usb',
       lastUsedAt: '2024-01-15T00:00:00Z',
       createdAt: '2024-01-01T00:00:00Z',
+      updatedAt: '2024-01-01T00:00:00Z',
     },
     {
       id: '2',
       userId: 'user1',
       name: 'Office Key',
       credentialId: 'cred-2-def456',
-      publicKey: 'pub-key-2',
-      counter: 2,
-      deviceType: 'usb',
-      lastUsedAt: null,
+      lastUsedAt: undefined,
       createdAt: '2024-01-05T00:00:00Z',
+      updatedAt: '2024-01-05T00:00:00Z',
     },
   ]
 
@@ -258,7 +254,7 @@ describe('UserPasskeys.vue', () => {
       } as any)
       vi.mocked(passkeyApi.deletePasskey).mockRejectedValue({
         response: { data: { message: 'Delete failed' } },
-      })
+      } as any)
 
       const wrapper = mount(UserPasskeys, mountOptions)
       await flushPromises()
@@ -278,7 +274,7 @@ describe('UserPasskeys.vue', () => {
         response: { data: { message: 'Failed to load' } },
       })
 
-      const wrapper = mount(UserPasskeys, mountOptions)
+      mount(UserPasskeys, mountOptions)
       await flushPromises()
 
       expect(mockMessage.error).toHaveBeenCalledWith('Failed to load')
@@ -316,7 +312,7 @@ describe('UserPasskeys.vue', () => {
             }),
           },
         },
-      })
+      } as any)
 
       const wrapper = mount(UserPasskeys, mountOptions)
       await flushPromises()
@@ -362,7 +358,7 @@ describe('UserPasskeys.vue', () => {
             }),
           },
         },
-      })
+      } as any)
 
       const wrapper = mount(UserPasskeys, mountOptions)
       await flushPromises()
@@ -406,7 +402,7 @@ describe('UserPasskeys.vue', () => {
             }),
           },
         },
-      })
+      } as any)
 
       const wrapper = mount(UserPasskeys, mountOptions)
       await flushPromises()
